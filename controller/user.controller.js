@@ -105,4 +105,29 @@ const logout = async (req, res) => {
   }
 };
 
-module.exports = { register, login, logout };
+const veryfiyToken = async (req, res, next) => {
+  const authorization = req.headers.authorization || req.cookies.token;
+  if (!authorization) {
+    return res.status(401).json({ message: "token not found" });
+  }
+  console.log("authorization: ", authorization);
+
+  // extract jwt token from the request header
+  const token = req.headers.authorization.split(" ")[1];
+
+  if (!token) res.status(401).json({ message: "unauthorized token" });
+
+  try {
+    // verify jwt token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // attach user information to the request object
+    req.userPayload = decoded;
+    next();
+  } catch (error) {
+    console.log(error);
+    res.status(401).json({ message: "Invalid token" });
+  }
+};
+
+module.exports = { register, login, logout, veryfiyToken };
